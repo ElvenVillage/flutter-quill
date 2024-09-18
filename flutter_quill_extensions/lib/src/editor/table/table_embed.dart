@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
-import '../../common/utils/quill_table_utils.dart';
-import 'table_cell_embed.dart';
-import 'table_models.dart';
+import 'package:flutter_quill_extensions/src/common/utils/quill_table_utils.dart';
+import 'package:flutter_quill_extensions/src/editor/table/table_cell_embed.dart';
+import 'package:flutter_quill_extensions/src/editor/table/table_models.dart';
 
 class CustomTableEmbed extends CustomBlockEmbed {
   const CustomTableEmbed(String value) : super(tableType, value);
@@ -15,7 +15,8 @@ class CustomTableEmbed extends CustomBlockEmbed {
   static CustomTableEmbed fromDocument(Document document) =>
       CustomTableEmbed(jsonEncode(document.toDelta().toJson()));
 
-  Document get document => Document.fromJson(jsonDecode(data));
+  Document get document =>
+      Document.fromJson(jsonDecode(data as String) as List);
 }
 
 //Embed builder
@@ -34,9 +35,11 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
     TextStyle textStyle,
   ) {
     final tableData = node.value.data;
+
     return TableWidget(
       tableData: tableData,
       controller: controller,
+      offset: node.documentOffset,
     );
   }
 }
@@ -45,10 +48,12 @@ class TableWidget extends StatefulWidget {
   const TableWidget({
     required this.tableData,
     required this.controller,
+    required this.offset,
     super.key,
   });
   final QuillController controller;
   final Map<String, dynamic> tableData;
+  final int offset;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();
@@ -119,6 +124,7 @@ class _TableWidgetState extends State<TableWidget> {
   }
 
   void _updateTable() {
+    widget.controller.moveCursorToPosition(widget.offset);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final offset = getEmbedNode(
         widget.controller,
@@ -147,55 +153,56 @@ class _TableWidgetState extends State<TableWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () async {
-                final position = renderPosition(context);
-                await showMenu<TableOperation>(
-                    context: context,
-                    position: position,
-                    items: [
-                      const PopupMenuItem(
-                        value: TableOperation.addColumn,
-                        child: Text('Add column'),
-                      ),
-                      const PopupMenuItem(
-                        value: TableOperation.addRow,
-                        child: Text('Add row'),
-                      ),
-                      const PopupMenuItem(
-                        value: TableOperation.removeColumn,
-                        child: Text('Delete column'),
-                      ),
-                      const PopupMenuItem(
-                        value: TableOperation.removeRow,
-                        child: Text('Delete row'),
-                      ),
-                    ]).then((value) {
-                  if (value != null) {
-                    if (value == TableOperation.addRow) {
-                      _addRow();
+            if (!widget.controller.readOnly) ...[
+              IconButton(
+                icon: const Icon(Icons.more_vert),
+                onPressed: () async {
+                  final position = renderPosition(context);
+                  await showMenu<TableOperation>(
+                      context: context,
+                      position: position,
+                      items: [
+                        const PopupMenuItem(
+                          value: TableOperation.addColumn,
+                          child: Text('Добавить столбец'),
+                        ),
+                        const PopupMenuItem(
+                          value: TableOperation.addRow,
+                          child: Text('Добавить строку'),
+                        ),
+                        const PopupMenuItem(
+                          value: TableOperation.removeColumn,
+                          child: Text('Удалить столбец'),
+                        ),
+                        const PopupMenuItem(
+                          value: TableOperation.removeRow,
+                          child: Text('Удалить строку'),
+                        ),
+                      ]).then((value) {
+                    if (value != null) {
+                      if (value == TableOperation.addRow) {
+                        _addRow();
+                      }
+                      if (value == TableOperation.addColumn) {
+                        _addColumn();
+                      }
+                      if (value == TableOperation.removeColumn) {
+                        _removeColumn(_selectedColumnId);
+                      }
+                      if (value == TableOperation.removeRow) {
+                        _removeRow(_selectedRowId);
+                      }
                     }
-                    if (value == TableOperation.addColumn) {
-                      _addColumn();
-                    }
-                    if (value == TableOperation.removeColumn) {
-                      _removeColumn(_selectedColumnId);
-                    }
-                    if (value == TableOperation.removeRow) {
-                      _removeRow(_selectedRowId);
-                    }
-                  }
-                });
-              },
-            ),
-            const Divider(
-              color: Colors.white,
-              height: 1,
-            ),
+                  });
+                },
+              ),
+              const Divider(
+                color: Colors.black,
+                height: 1,
+              )
+            ],
             Table(
-              border: const TableBorder.symmetric(
-                  inside: BorderSide(color: Colors.white)),
+              border: const TableBorder.symmetric(inside: BorderSide()),
               children: _buildTableRows(),
             ),
           ],
@@ -215,6 +222,7 @@ class _TableWidgetState extends State<TableWidget> {
           final columnId = key;
           final data = value;
           rowCells.add(TableCellWidget(
+            editable: !widget.controller.readOnly,
             cellId: rowKey,
             onTap: (node) {
               setState(() {
@@ -223,11 +231,14 @@ class _TableWidgetState extends State<TableWidget> {
               });
             },
             cellData: data,
-            onUpdate: (data) => _updateCell(columnId, rowKey, data),
+            onUpdate: (data) {
+              _updateCell(columnId, rowKey, data);
+            },
           ));
         }
       });
-      rows.add(TableRow(children: rowCells));
+      rows.add(TableRow(
+          children: rowCells, decoration: BoxDecoration(border: Border.all())));
     });
     return rows;
   }
