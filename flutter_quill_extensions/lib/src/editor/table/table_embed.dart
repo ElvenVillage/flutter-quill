@@ -239,10 +239,13 @@ class _TableWidgetState extends State<TableWidget> {
             onTap: () {
               if (_removeColumnMode) {
                 _removeColumn(columnId);
+                return true;
               }
               if (_removeRowMode) {
                 _removeRow(rowId);
+                return true;
               }
+              return false;
             },
             cellData: data,
             onUpdate: (data) {

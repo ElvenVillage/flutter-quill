@@ -13,7 +13,7 @@ class TableCellWidget extends StatelessWidget {
   final bool editable;
   final String cellId;
   final String cellData;
-  final void Function() onTap;
+  final bool Function() onTap;
   final void Function(String data) onUpdate;
 
   @override
@@ -27,7 +27,7 @@ class TableCellWidget extends StatelessWidget {
       child: InkWell(
           onTap: editable
               ? () async {
-                  onTap();
+                  if (onTap()) return;
                   final controller = TextEditingController(text: cellData);
                   await showDialog<void>(
                       context: context,
