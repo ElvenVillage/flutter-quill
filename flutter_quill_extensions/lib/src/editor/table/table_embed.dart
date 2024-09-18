@@ -97,10 +97,13 @@ class _TableWidgetState extends State<TableWidget> {
 
   void _removeColumn(String columnId) {
     setState(() {
-      _tableModel.columns.remove(columnId);
-      _tableModel.rows.forEach((key, row) {
-        row.cells.remove(columnId);
-      });
+      if (_tableModel.columns.length > 1) {
+        _tableModel.columns.remove(columnId);
+        _tableModel.rows.forEach((key, row) {
+          row.cells.remove(columnId);
+        });
+      }
+
       _removeColumnMode = false;
     });
     _updateTable();
@@ -108,7 +111,9 @@ class _TableWidgetState extends State<TableWidget> {
 
   void _removeRow(String rowId) {
     setState(() {
-      _tableModel.rows.remove(rowId);
+      if (_tableModel.rows.length > 1) {
+        _tableModel.rows.remove(rowId);
+      }
       _removeRowMode = false;
     });
     _updateTable();
