@@ -61,8 +61,9 @@ class TableWidget extends StatefulWidget {
 
 class _TableWidgetState extends State<TableWidget> {
   TableModel _tableModel = TableModel(columns: {}, rows: {});
-  String _selectedColumnId = '';
-  String _selectedRowId = '';
+
+  var _removeRowMode = false;
+  var _removeColumnMode = false;
 
   @override
   void initState() {
@@ -100,10 +101,7 @@ class _TableWidgetState extends State<TableWidget> {
       _tableModel.rows.forEach((key, row) {
         row.cells.remove(columnId);
       });
-      if (_selectedRowId == _selectedColumnId) {
-        _selectedRowId = '';
-      }
-      _selectedColumnId = '';
+      _removeColumnMode = false;
     });
     _updateTable();
   }
@@ -111,7 +109,7 @@ class _TableWidgetState extends State<TableWidget> {
   void _removeRow(String rowId) {
     setState(() {
       _tableModel.rows.remove(rowId);
-      _selectedRowId = '';
+      _removeRowMode = false;
     });
     _updateTable();
   }
@@ -154,48 +152,62 @@ class _TableWidgetState extends State<TableWidget> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!widget.controller.readOnly) ...[
-              IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () async {
-                  final position = renderPosition(context);
-                  await showMenu<TableOperation>(
-                      context: context,
-                      position: position,
-                      items: [
-                        const PopupMenuItem(
-                          value: TableOperation.addColumn,
-                          child: Text('Добавить столбец'),
-                        ),
-                        const PopupMenuItem(
-                          value: TableOperation.addRow,
-                          child: Text('Добавить строку'),
-                        ),
-                        const PopupMenuItem(
-                          value: TableOperation.removeColumn,
-                          child: Text('Удалить столбец'),
-                        ),
-                        const PopupMenuItem(
-                          value: TableOperation.removeRow,
-                          child: Text('Удалить строку'),
-                        ),
-                      ]).then((value) {
-                    if (value != null) {
-                      if (value == TableOperation.addRow) {
-                        _addRow();
+              if (_removeRowMode || _removeColumnMode)
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _removeRowMode = false;
+                        _removeColumnMode = false;
+                      });
+                    },
+                    icon: const Icon(Icons.cancel))
+              else
+                IconButton(
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () async {
+                    final position = renderPosition(context);
+                    await showMenu<TableOperation>(
+                        context: context,
+                        position: position,
+                        items: [
+                          const PopupMenuItem(
+                            value: TableOperation.addColumn,
+                            child: Text('Добавить столбец'),
+                          ),
+                          const PopupMenuItem(
+                            value: TableOperation.addRow,
+                            child: Text('Добавить строку'),
+                          ),
+                          const PopupMenuItem(
+                            value: TableOperation.removeColumn,
+                            child: Text('Удалить столбец'),
+                          ),
+                          const PopupMenuItem(
+                            value: TableOperation.removeRow,
+                            child: Text('Удалить строку'),
+                          ),
+                        ]).then((value) {
+                      if (value != null) {
+                        if (value == TableOperation.addRow) {
+                          _addRow();
+                        }
+                        if (value == TableOperation.addColumn) {
+                          _addColumn();
+                        }
+                        if (value == TableOperation.removeColumn) {
+                          setState(() {
+                            _removeColumnMode = true;
+                          });
+                        }
+                        if (value == TableOperation.removeRow) {
+                          setState(() {
+                            _removeRowMode = true;
+                          });
+                        }
                       }
-                      if (value == TableOperation.addColumn) {
-                        _addColumn();
-                      }
-                      if (value == TableOperation.removeColumn) {
-                        _removeColumn(_selectedColumnId);
-                      }
-                      if (value == TableOperation.removeRow) {
-                        _removeRow(_selectedRowId);
-                      }
-                    }
-                  });
-                },
-              ),
+                    });
+                  },
+                ),
               const Divider(
                 color: Colors.black,
                 height: 1,
@@ -224,11 +236,13 @@ class _TableWidgetState extends State<TableWidget> {
           rowCells.add(TableCellWidget(
             editable: !widget.controller.readOnly,
             cellId: rowKey,
-            onTap: (node) {
-              setState(() {
-                _selectedColumnId = columnId;
-                _selectedRowId = rowModel.id;
-              });
+            onTap: () {
+              if (_removeColumnMode) {
+                _removeColumn(columnId);
+              }
+              if (_removeRowMode) {
+                _removeRow(rowId);
+              }
             },
             cellData: data,
             onUpdate: (data) {
