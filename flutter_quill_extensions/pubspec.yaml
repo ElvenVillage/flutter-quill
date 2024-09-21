@@ -32,21 +32,21 @@ dependencies:
   http: ^1.2.0
   path: ^1.8.3
   meta: ^1.10.0
-  universal_html: ^2.2.4
+  # universal_html: ^2.2.4
   cross_file: ^0.3.3+6
 
   flutter_quill: ^10.3.0
   photo_view: ^0.15.0
-  youtube_explode_dart: ^2.2.1
+  # youtube_explode_dart: ^2.2.1
 
   # Plugins
-  video_player: ^2.8.1
-  youtube_player_flutter: ^9.0.1
+  # video_player: ^2.8.1
+  # youtube_player_flutter: ^9.0.1
   url_launcher: ^6.2.1
   super_clipboard: ^0.8.20
-  gal: ^2.3.0
-  gal_linux: ^0.1.0
-  image_picker: ^1.0.4
+  # gal: ^2.3.0
+  # gal_linux: ^0.1.0
+  # image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:

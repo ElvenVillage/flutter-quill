@@ -1,11 +1,7 @@
-import 'dart:io' show File;
-
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart' show Uint8List, immutable;
 import 'package:http/http.dart' as http;
 
-import '../../editor/image/widgets/image.dart';
-import '../../editor_toolbar_shared/image_saver/s_image_saver.dart';
 import 'patterns.dart';
 
 bool isBase64(String str) {
@@ -61,45 +57,5 @@ Future<Uint8List?> convertImageToUint8List(String image) async {
     return await file.readAsBytes();
   } catch (e) {
     return null;
-  }
-}
-
-Future<SaveImageResult> saveImage({
-  required String imageUrl,
-  required ImageSaverService imageSaverService,
-}) async {
-  final imageFile = File(imageUrl);
-  final hasPermission = await imageSaverService.hasAccess();
-  if (!hasPermission) {
-    await imageSaverService.requestAccess();
-  }
-  final imageExistsLocally = await imageFile.exists();
-  if (!imageExistsLocally) {
-    try {
-      await imageSaverService.saveImageFromNetwork(
-        Uri.parse(appendFileExtensionToImageUrl(imageUrl)),
-      );
-      return const SaveImageResult(
-        error: null,
-        method: SaveImageResultMethod.network,
-      );
-    } catch (e) {
-      return SaveImageResult(
-        error: e.toString(),
-        method: SaveImageResultMethod.network,
-      );
-    }
-  }
-  try {
-    await imageSaverService.saveLocalImage(imageUrl);
-    return const SaveImageResult(
-      error: null,
-      method: SaveImageResultMethod.localStorage,
-    );
-  } catch (e) {
-    return SaveImageResult(
-      error: e.toString(),
-      method: SaveImageResultMethod.localStorage,
-    );
   }
 }

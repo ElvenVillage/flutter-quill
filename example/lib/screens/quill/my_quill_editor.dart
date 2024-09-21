@@ -1,19 +1,13 @@
 import 'dart:io' as io show Directory, File;
 
-import 'package:cached_network_image/cached_network_image.dart'
-    show CachedNetworkImageProvider;
-import 'package:desktop_drop/desktop_drop.dart' show DropTarget;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/extensions.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 // ignore: implementation_imports
-import 'package:flutter_quill_extensions/src/editor/image/widgets/image.dart'
-    show getImageProviderByImageSource, imageFileExtensions;
+
 import 'package:path/path.dart' as path;
 
-import '../../extensions/scaffold_messenger.dart';
 import 'embeds/timestamp_embed.dart';
 
 class MyQuillEditor extends StatelessWidget {
@@ -98,68 +92,13 @@ class MyQuillEditor extends StatelessWidget {
         embedBuilders: [
           ...(kIsWeb
               ? FlutterQuillEmbeds.editorWebBuilders()
-              : FlutterQuillEmbeds.editorBuilders(
-                  imageEmbedConfigurations: QuillEditorImageEmbedConfigurations(
-                    imageErrorWidgetBuilder: (context, error, stackTrace) {
-                      return Text(
-                        'Error while loading an image: ${error.toString()}',
-                      );
-                    },
-                    imageProviderBuilder: (context, imageUrl) {
-                      // cached_network_image is supported
-                      // only for Android, iOS and web
-
-                      // We will use it only if image from network
-                      if (isAndroidApp || isIosApp || kIsWeb) {
-                        if (isHttpBasedUrl(imageUrl)) {
-                          return CachedNetworkImageProvider(
-                            imageUrl,
-                          );
-                        }
-                      }
-                      return getImageProviderByImageSource(
-                        imageUrl,
-                        imageProviderBuilder: null,
-                        context: context,
-                        assetsPrefix: QuillSharedExtensionsConfigurations.get(
-                                context: context)
-                            .assetsPrefix,
-                      );
-                    },
-                  ),
-                  videoEmbedConfigurations: QuillEditorVideoEmbedConfigurations(
-                    // Loading YouTube videos on Desktop is not supported yet
-                    // when using iframe platform view
-                    youtubeVideoSupportMode: isDesktopApp
-                        ? YoutubeVideoSupportMode.customPlayerWithDownloadUrl
-                        : YoutubeVideoSupportMode.iframeView,
-                  ),
-                )),
+              : FlutterQuillEmbeds.editorBuilders()),
           TimeStampEmbedBuilderWidget(),
         ],
         builder: (context, rawEditor) {
           // The `desktop_drop` plugin doesn't support iOS platform for now
-          if (isIosApp) {
-            return rawEditor;
-          }
-          return DropTarget(
-            onDragDone: (details) {
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final file = details.files.first;
-              final isSupported = imageFileExtensions.any(file.name.endsWith);
-              if (!isSupported) {
-                scaffoldMessenger.showText(
-                  'Only images are supported right now: ${file.mimeType}, ${file.name}, ${file.path}, $imageFileExtensions',
-                );
-                return;
-              }
-              context.requireQuillController.insertImageBlock(
-                imageSource: file.path,
-              );
-              scaffoldMessenger.showText('Image is inserted.');
-            },
-            child: rawEditor,
-          );
+
+          return rawEditor;
         },
       ),
     );

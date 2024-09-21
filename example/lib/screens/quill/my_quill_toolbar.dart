@@ -3,7 +3,6 @@ import 'dart:io' as io show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quill/extensions.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -149,15 +148,6 @@ class MyQuillToolbar extends StatelessWidget {
                     controller: controller,
                   ),
                   const VerticalDivider(),
-                  QuillToolbarImageButton(
-                    controller: controller,
-                  ),
-                  QuillToolbarCameraButton(
-                    controller: controller,
-                  ),
-                  QuillToolbarVideoButton(
-                    controller: controller,
-                  ),
                   const VerticalDivider(),
                   QuillToolbarColorButton(
                     controller: controller,
@@ -294,14 +284,6 @@ class MyQuillToolbar extends StatelessWidget {
               ),
             ],
             embedButtons: FlutterQuillEmbeds.toolbarButtons(
-              imageButtonOptions: QuillToolbarImageButtonOptions(
-                imageButtonConfigurations: QuillToolbarImageConfigurations(
-                  onImageInsertCallback: isAndroidApp || isIosApp || kIsWeb
-                      ? (image, controller) =>
-                          onImageInsertWithCropping(image, controller, context)
-                      : onImageInsert,
-                ),
-              ),
               tableButtonOptions: const QuillToolbarTableButtonOptions(),
             ),
           ),
