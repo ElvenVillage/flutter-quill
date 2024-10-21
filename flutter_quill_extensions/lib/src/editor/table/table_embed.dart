@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
-import 'package:flutter_quill_extensions/src/common/utils/quill_table_utils.dart';
-import 'package:flutter_quill_extensions/src/editor/table/table_cell_embed.dart';
-import 'package:flutter_quill_extensions/src/editor/table/table_models.dart';
+import '../../common/utils/quill_table_utils.dart';
+import 'table_cell_embed.dart';
+import 'table_models.dart';
 
 class CustomTableEmbed extends CustomBlockEmbed {
   const CustomTableEmbed(String value) : super(tableType, value);
@@ -24,6 +24,16 @@ class CustomTableEmbed extends CustomBlockEmbed {
 class QuillEditorTableEmbedBuilder extends EmbedBuilder {
   @override
   String get key => 'table';
+
+  @override
+  String toPlainText(Embed node) {
+    final tableData = node.value.data;
+    final tableModel = TableModel.fromMap(tableData);
+
+    return tableModel.rows.values
+        .map((v) => v.cells.values.join('  '))
+        .join('\n');
+  }
 
   @override
   Widget build(
