@@ -10,7 +10,7 @@ import 'package:path/path.dart' as path;
 
 import 'embeds/timestamp_embed.dart';
 
-class MyQuillEditor extends StatelessWidget {
+class MyQuillEditor extends StatefulWidget {
   const MyQuillEditor({
     required this.controller,
     required this.configurations,
@@ -25,13 +25,21 @@ class MyQuillEditor extends StatelessWidget {
   final FocusNode focusNode;
 
   @override
+  State<MyQuillEditor> createState() => _MyQuillEditorState();
+}
+
+class _MyQuillEditorState extends State<MyQuillEditor> {
+  late QuillController? _activeController = widget.controller;
+
+  @override
   Widget build(BuildContext context) {
     final defaultTextStyle = DefaultTextStyle.of(context);
     return QuillEditor(
-      scrollController: scrollController,
-      focusNode: focusNode,
-      controller: controller,
-      configurations: configurations.copyWith(
+      scrollController: widget.scrollController,
+      focusNode: widget.focusNode,
+      controller: widget.controller,
+      configurations: widget.configurations.copyWith(
+        readOnly: true,
         elementOptions: const QuillEditorElementOptions(
           codeBlock: QuillEditorCodeBlockElementOptions(
             enableLineNumbers: true,
@@ -56,6 +64,7 @@ class MyQuillEditor extends StatelessWidget {
           sizeSmall: defaultTextStyle.style.copyWith(fontSize: 9),
         ),
         scrollable: true,
+        checkBoxReadOnly: true,
         placeholder: 'Start writing your notes...',
         padding: const EdgeInsets.all(16),
         onImagePaste: (imageBytes) async {
@@ -90,9 +99,11 @@ class MyQuillEditor extends StatelessWidget {
           return file.path;
         },
         embedBuilders: [
-          ...(kIsWeb
-              ? FlutterQuillEmbeds.editorWebBuilders()
-              : FlutterQuillEmbeds.editorBuilders()),
+          QuillEditorTableEmbedBuilder(onChangeController: (controller) {
+            setState(() {
+              _activeController = controller;
+            });
+          }),
           TimeStampEmbedBuilderWidget(),
         ],
         builder: (context, rawEditor) {

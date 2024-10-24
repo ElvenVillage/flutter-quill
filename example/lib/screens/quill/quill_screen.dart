@@ -3,8 +3,7 @@ import 'dart:convert' show jsonEncode;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart'
-    show FlutterQuillEmbeds, QuillSharedExtensionsConfigurations;
-import 'package:share_plus/share_plus.dart' show Share;
+    show QuillSharedExtensionsConfigurations;
 
 import '../../extensions/scaffold_messenger.dart';
 import '../../spell_checker/spell_checker.dart';
@@ -79,22 +78,6 @@ class _QuillScreenState extends State<QuillScreen> {
                   ? Colors.red.withOpacity(0.5)
                   : null,
             ),
-          ),
-          IconButton(
-            tooltip: 'Share',
-            onPressed: () {
-              final plainText = _controller.document.toPlainText(
-                FlutterQuillEmbeds.defaultEditorBuilders(),
-              );
-              if (plainText.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showText(
-                  "We can't share empty document, please enter some text first",
-                );
-                return;
-              }
-              Share.share(plainText);
-            },
-            icon: const Icon(Icons.share),
           ),
           IconButton(
             tooltip: 'Print to log',

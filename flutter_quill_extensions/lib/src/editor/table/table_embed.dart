@@ -22,6 +22,9 @@ class CustomTableEmbed extends CustomBlockEmbed {
 //Embed builder
 
 class QuillEditorTableEmbedBuilder extends EmbedBuilder {
+  QuillEditorTableEmbedBuilder({required this.onChangeController});
+
+  final void Function(QuillController) onChangeController;
   @override
   String get key => 'table';
 
@@ -47,6 +50,10 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
     final tableData = node.value.data;
 
     return TableWidget(
+      onChangeController: onChangeController,
+      dropFocus: () {
+        controller.readOnly = true;
+      },
       tableData: tableData,
       controller: controller,
       offset: node.documentOffset,
@@ -59,11 +66,16 @@ class TableWidget extends StatefulWidget {
     required this.tableData,
     required this.controller,
     required this.offset,
+    required this.dropFocus,
+    required this.onChangeController,
     super.key,
   });
+
+  final void Function(QuillController) onChangeController;
   final QuillController controller;
   final Map<String, dynamic> tableData;
   final int offset;
+  final void Function() dropFocus;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();
@@ -249,9 +261,11 @@ class _TableWidgetState extends State<TableWidget> {
           final columnId = key;
           final data = value;
           rowCells.add(TableCellWidget(
+            setActiveController: widget.onChangeController,
             editable: !widget.controller.readOnly,
             cellId: rowKey,
             onTap: () {
+              widget.dropFocus();
               if (_removeColumnMode) {
                 _removeColumn(columnId);
                 return true;

@@ -27,17 +27,6 @@ class FlutterQuillEmbeds {
   /// );
   /// ```
   ///
-  static List<fq.EmbedBuilder> editorBuilders() {
-    if (kIsWeb) {
-      throw UnsupportedError(
-        'The editorBuilders() is not for web, please use editorWebBuilders() '
-        'instead',
-      );
-    }
-    return [
-      QuillEditorTableEmbedBuilder(),
-    ];
-  }
 
   /// Returns a list of embed builders specifically designed for web support.
   ///
@@ -62,9 +51,6 @@ class FlutterQuillEmbeds {
   /// It will use [editorWebBuilders] for web and [editorBuilders] for others
   ///
   /// It's not customizable with minimal configurations
-  static List<fq.EmbedBuilder> defaultEditorBuilders() {
-    return kIsWeb ? editorWebBuilders() : editorBuilders();
-  }
 
   /// Returns a list of embed button builders to customize the toolbar buttons.
   ///
