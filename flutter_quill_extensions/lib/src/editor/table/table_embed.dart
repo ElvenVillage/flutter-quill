@@ -23,14 +23,14 @@ class CustomTableEmbed extends CustomBlockEmbed {
 
 class QuillEditorTableEmbedBuilder extends EmbedBuilder {
   QuillEditorTableEmbedBuilder({
-    required this.toolbarGlobalKey,
-    required this.onEditMode,
-    required this.config,
+    this.toolbarGlobalKey,
+    this.onEditMode,
+    this.config,
   });
 
-  final GlobalKey toolbarGlobalKey;
-  final void Function(bool editMode) onEditMode;
-  final QuillSimpleToolbarConfigurations config;
+  final GlobalKey? toolbarGlobalKey;
+  final void Function(bool editMode)? onEditMode;
+  final QuillSimpleToolbarConfigurations? config;
   @override
   String get key => 'table';
 
@@ -80,9 +80,9 @@ class TableWidget extends StatefulWidget {
   final QuillController controller;
   final Map<String, dynamic> tableData;
   final int offset;
-  final GlobalKey toolbarGlobalKey;
-  final void Function(bool mode) onEditMode;
-  final QuillSimpleToolbarConfigurations config;
+  final GlobalKey? toolbarGlobalKey;
+  final void Function(bool mode)? onEditMode;
+  final QuillSimpleToolbarConfigurations? config;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();

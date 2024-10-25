@@ -102,9 +102,9 @@ class TableCellWidget extends StatefulWidget {
   final String cellData;
   final bool Function() onTap;
   final void Function(String data) onUpdate;
-  final GlobalKey toolbarGlobalKey;
-  final void Function(bool editMode) onEditMode;
-  final QuillSimpleToolbarConfigurations config;
+  final GlobalKey? toolbarGlobalKey;
+  final void Function(bool editMode)? onEditMode;
+  final QuillSimpleToolbarConfigurations? config;
 
   @override
   State<TableCellWidget> createState() => _TableCellWidgetState();
@@ -117,78 +117,80 @@ class _TableCellWidgetState extends State<TableCellWidget> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
-        setState(() {
-          _editMode = true;
-        });
-
-        widget.onEditMode(true);
-
-        final cellRenderBox =
-            _cellKey.currentContext?.findRenderObject() as RenderBox;
-        final cellOffset = cellRenderBox.localToGlobal(Offset.zero);
-        final cellSize = cellRenderBox.size;
-
-        final toolbarRenderBox = widget.toolbarGlobalKey.currentContext
-            ?.findRenderObject() as RenderBox;
-        final toolbarOffset = toolbarRenderBox.localToGlobal(Offset.zero);
-
-        QuillController? activeController;
-
-        await showDialog(
-            barrierColor: Colors.transparent,
-            context: context,
-            builder: (context) {
-              return StatefulBuilder(builder: (context, setState) {
-                return Stack(
-                  children: [
-                    if (activeController != null)
-                      Positioned(
-                          top: toolbarOffset.dy,
-                          left: toolbarOffset.dx,
-                          child: QuillSimpleToolbar(
-                            configurations: widget.config,
-                            controller: activeController,
-                          )),
-                    Positioned(
-                      top: cellOffset.dy,
-                      left: cellOffset.dx,
-                      child: SizedBox(
-                        width: cellSize.width,
-                        height: cellSize.height,
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: _FormattedTextViewer(
-                              readOnly: false,
-                              quillText: widget.cellData,
-                              setActiveController: (controller) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  setState(() {
-                                    activeController = controller;
-                                  });
-                                });
-                              },
-                              dropRootFocus: () {},
-                              onChange: (val) {
-                                setState(() {
-                                  widget.onUpdate(val);
-                                });
-                              }),
-                        ),
-                      ),
-                    )
-                  ],
-                );
+      onTap: widget.onEditMode == null
+          ? null
+          : () async {
+              setState(() {
+                _editMode = true;
               });
-            });
 
-        setState(() {
-          _editMode = false;
-        });
+              widget.onEditMode!(true);
 
-        widget.onEditMode(false);
-      },
+              final cellRenderBox =
+                  _cellKey.currentContext?.findRenderObject() as RenderBox;
+              final cellOffset = cellRenderBox.localToGlobal(Offset.zero);
+              final cellSize = cellRenderBox.size;
+
+              final toolbarRenderBox = widget.toolbarGlobalKey!.currentContext
+                  ?.findRenderObject() as RenderBox;
+              final toolbarOffset = toolbarRenderBox.localToGlobal(Offset.zero);
+
+              QuillController? activeController;
+
+              await showDialog(
+                  barrierColor: Colors.transparent,
+                  context: context,
+                  builder: (context) {
+                    return StatefulBuilder(builder: (context, setState) {
+                      return Stack(
+                        children: [
+                          if (activeController != null)
+                            Positioned(
+                                top: toolbarOffset.dy,
+                                left: toolbarOffset.dx,
+                                child: QuillSimpleToolbar(
+                                  configurations: widget.config,
+                                  controller: activeController,
+                                )),
+                          Positioned(
+                            top: cellOffset.dy,
+                            left: cellOffset.dx,
+                            child: SizedBox(
+                              width: cellSize.width,
+                              height: cellSize.height,
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: _FormattedTextViewer(
+                                    readOnly: false,
+                                    quillText: widget.cellData,
+                                    setActiveController: (controller) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        setState(() {
+                                          activeController = controller;
+                                        });
+                                      });
+                                    },
+                                    dropRootFocus: () {},
+                                    onChange: (val) {
+                                      setState(() {
+                                        widget.onUpdate(val);
+                                      });
+                                    }),
+                              ),
+                            ),
+                          )
+                        ],
+                      );
+                    });
+                  });
+
+              setState(() {
+                _editMode = false;
+              });
+
+              widget.onEditMode!(false);
+            },
       child: _editMode
           ? const SizedBox.shrink()
           : Container(
