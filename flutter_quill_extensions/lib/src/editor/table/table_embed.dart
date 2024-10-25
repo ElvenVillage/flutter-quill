@@ -22,9 +22,15 @@ class CustomTableEmbed extends CustomBlockEmbed {
 //Embed builder
 
 class QuillEditorTableEmbedBuilder extends EmbedBuilder {
-  QuillEditorTableEmbedBuilder({required this.onChangeController});
+  QuillEditorTableEmbedBuilder({
+    required this.toolbarGlobalKey,
+    required this.onEditMode,
+    required this.config,
+  });
 
-  final void Function(QuillController) onChangeController;
+  final GlobalKey toolbarGlobalKey;
+  final void Function(bool editMode) onEditMode;
+  final QuillSimpleToolbarConfigurations config;
   @override
   String get key => 'table';
 
@@ -50,10 +56,9 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
     final tableData = node.value.data;
 
     return TableWidget(
-      onChangeController: onChangeController,
-      dropFocus: () {
-        controller.readOnly = true;
-      },
+      config: config,
+      onEditMode: onEditMode,
+      toolbarGlobalKey: toolbarGlobalKey,
       tableData: tableData,
       controller: controller,
       offset: node.documentOffset,
@@ -66,16 +71,18 @@ class TableWidget extends StatefulWidget {
     required this.tableData,
     required this.controller,
     required this.offset,
-    required this.dropFocus,
-    required this.onChangeController,
+    required this.toolbarGlobalKey,
+    required this.onEditMode,
+    required this.config,
     super.key,
   });
 
-  final void Function(QuillController) onChangeController;
   final QuillController controller;
   final Map<String, dynamic> tableData;
   final int offset;
-  final void Function() dropFocus;
+  final GlobalKey toolbarGlobalKey;
+  final void Function(bool mode) onEditMode;
+  final QuillSimpleToolbarConfigurations config;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();
@@ -261,11 +268,12 @@ class _TableWidgetState extends State<TableWidget> {
           final columnId = key;
           final data = value;
           rowCells.add(TableCellWidget(
-            setActiveController: widget.onChangeController,
+            config: widget.config,
+            onEditMode: widget.onEditMode,
+            toolbarGlobalKey: widget.toolbarGlobalKey,
             editable: !widget.controller.readOnly,
             cellId: rowKey,
             onTap: () {
-              widget.dropFocus();
               if (_removeColumnMode) {
                 _removeColumn(columnId);
                 return true;

@@ -40,9 +40,21 @@ class _QuillScreenState extends State<QuillScreen> {
   var _isReadOnly = false;
   var _isSpellcheckerActive = false;
 
+  late var _activeController = _controller;
+
+  final _toolbarGlobalKey = GlobalKey();
+  var _editMode = false;
+
   @override
   void initState() {
     super.initState();
+    _editorFocusNode.addListener(() {
+      if (_editorFocusNode.hasPrimaryFocus) {
+        setState(() {
+          _activeController = _controller;
+        });
+      }
+    });
     _controller.document = widget.args.document;
   }
 
@@ -97,14 +109,25 @@ class _QuillScreenState extends State<QuillScreen> {
       body: Column(
         children: [
           if (!_isReadOnly)
-            MyQuillToolbar(
-              controller: _controller,
-              focusNode: _editorFocusNode,
+            Opacity(
+              opacity: !_editMode ? 1.0 : 0.0,
+              child: MyQuillToolbar(
+                key: _toolbarGlobalKey,
+                controller: _activeController,
+                focusNode: _editorFocusNode,
+              ),
             ),
           Builder(
             builder: (context) {
               return Expanded(
                 child: MyQuillEditor(
+                  config: const QuillSimpleToolbarConfigurations(),
+                  onEditMode: (val) {
+                    setState(() {
+                      _editMode = val;
+                    });
+                  },
+                  toolbarGlobalKey: _toolbarGlobalKey,
                   controller: _controller,
                   configurations: QuillEditorConfigurations(
                     characterShortcutEvents: standardCharactersShortcutEvents,

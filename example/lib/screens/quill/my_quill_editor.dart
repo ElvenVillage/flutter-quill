@@ -16,6 +16,9 @@ class MyQuillEditor extends StatefulWidget {
     required this.configurations,
     required this.scrollController,
     required this.focusNode,
+    required this.toolbarGlobalKey,
+    required this.onEditMode,
+    required this.config,
     super.key,
   });
 
@@ -23,14 +26,15 @@ class MyQuillEditor extends StatefulWidget {
   final QuillEditorConfigurations configurations;
   final ScrollController scrollController;
   final FocusNode focusNode;
+  final GlobalKey toolbarGlobalKey;
+  final void Function(bool editMode) onEditMode;
+  final QuillSimpleToolbarConfigurations config;
 
   @override
   State<MyQuillEditor> createState() => _MyQuillEditorState();
 }
 
 class _MyQuillEditorState extends State<MyQuillEditor> {
-  late QuillController? _activeController = widget.controller;
-
   @override
   Widget build(BuildContext context) {
     final defaultTextStyle = DefaultTextStyle.of(context);
@@ -99,11 +103,10 @@ class _MyQuillEditorState extends State<MyQuillEditor> {
           return file.path;
         },
         embedBuilders: [
-          QuillEditorTableEmbedBuilder(onChangeController: (controller) {
-            setState(() {
-              _activeController = controller;
-            });
-          }),
+          QuillEditorTableEmbedBuilder(
+              config: widget.config,
+              toolbarGlobalKey: widget.toolbarGlobalKey,
+              onEditMode: widget.onEditMode),
           TimeStampEmbedBuilderWidget(),
         ],
         builder: (context, rawEditor) {
