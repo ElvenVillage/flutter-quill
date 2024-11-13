@@ -34,7 +34,7 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
   final void Function(bool editMode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
   final GlobalKey? customToolbarKey;
-  final Widget? customToolbar;
+  final Widget Function(QuillController)? customToolbar;
 
   @override
   String get key => 'table';
@@ -93,7 +93,7 @@ class TableWidget extends StatefulWidget {
   final void Function(bool mode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
   final GlobalKey? customToolbarKey;
-  final Widget? customToolbar;
+  final Widget Function(QuillController)? customToolbar;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();

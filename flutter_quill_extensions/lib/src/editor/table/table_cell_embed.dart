@@ -106,7 +106,7 @@ class TableCellWidget extends StatefulWidget {
   final void Function(String data) onUpdate;
   final GlobalKey? toolbarGlobalKey;
   final GlobalKey? customToolbarKey;
-  final Widget? customToolbar;
+  final Widget Function(QuillController)? customToolbar;
   final void Function(bool editMode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
 
@@ -165,7 +165,7 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                               Positioned(
                                 top: customToolbarOffset.dy,
                                 left: customToolbarOffset.dx,
-                                child: widget.customToolbar!,
+                                child: widget.customToolbar!(activeController!),
                               ),
                           ],
                           Positioned(
