@@ -26,11 +26,16 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
     this.toolbarGlobalKey,
     this.onEditMode,
     this.config,
+    this.customToolbar,
+    this.customToolbarKey,
   });
 
   final GlobalKey? toolbarGlobalKey;
   final void Function(bool editMode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
+  final GlobalKey? customToolbarKey;
+  final Widget? customToolbar;
+
   @override
   String get key => 'table';
 
@@ -62,6 +67,8 @@ class QuillEditorTableEmbedBuilder extends EmbedBuilder {
       tableData: tableData,
       controller: controller,
       offset: node.documentOffset,
+      customToolbar: customToolbar,
+      customToolbarKey: customToolbarKey,
     );
   }
 }
@@ -74,6 +81,8 @@ class TableWidget extends StatefulWidget {
     required this.toolbarGlobalKey,
     required this.onEditMode,
     required this.config,
+    required this.customToolbar,
+    required this.customToolbarKey,
     super.key,
   });
 
@@ -83,6 +92,8 @@ class TableWidget extends StatefulWidget {
   final GlobalKey? toolbarGlobalKey;
   final void Function(bool mode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
+  final GlobalKey? customToolbarKey;
+  final Widget? customToolbar;
 
   @override
   State<TableWidget> createState() => _TableWidgetState();
@@ -268,6 +279,8 @@ class _TableWidgetState extends State<TableWidget> {
           final columnId = key;
           final data = value;
           rowCells.add(TableCellWidget(
+            customToolbar: widget.customToolbar,
+            customToolbarKey: widget.customToolbarKey,
             config: widget.config,
             onEditMode: widget.onEditMode,
             toolbarGlobalKey: widget.toolbarGlobalKey,

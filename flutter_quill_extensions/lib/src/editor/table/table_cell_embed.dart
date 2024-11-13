@@ -94,6 +94,8 @@ class TableCellWidget extends StatefulWidget {
     required this.toolbarGlobalKey,
     required this.onEditMode,
     required this.config,
+    required this.customToolbar,
+    required this.customToolbarKey,
     super.key,
   });
 
@@ -103,6 +105,8 @@ class TableCellWidget extends StatefulWidget {
   final bool Function() onTap;
   final void Function(String data) onUpdate;
   final GlobalKey? toolbarGlobalKey;
+  final GlobalKey? customToolbarKey;
+  final Widget? customToolbar;
   final void Function(bool editMode)? onEditMode;
   final QuillSimpleToolbarConfigurations? config;
 
@@ -135,6 +139,11 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                   ?.findRenderObject() as RenderBox;
               final toolbarOffset = toolbarRenderBox.localToGlobal(Offset.zero);
 
+              final templatesRenderBox = widget.customToolbarKey!.currentContext
+                  ?.findRenderObject() as RenderBox;
+              final customToolbarOffset =
+                  templatesRenderBox.localToGlobal(Offset.zero);
+
               QuillController? activeController;
 
               await showDialog(
@@ -144,7 +153,7 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                     return StatefulBuilder(builder: (context, setState) {
                       return Stack(
                         children: [
-                          if (activeController != null)
+                          if (activeController != null) ...[
                             Positioned(
                                 top: toolbarOffset.dy,
                                 left: toolbarOffset.dx,
@@ -152,6 +161,13 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                                   configurations: widget.config,
                                   controller: activeController,
                                 )),
+                            if (widget.customToolbar != null)
+                              Positioned(
+                                top: customToolbarOffset.dy,
+                                left: customToolbarOffset.dx,
+                                child: widget.customToolbar!,
+                              ),
+                          ],
                           Positioned(
                             top: cellOffset.dy,
                             left: cellOffset.dx,
