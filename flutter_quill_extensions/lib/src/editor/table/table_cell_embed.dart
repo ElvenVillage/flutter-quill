@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../common/utils/quill_table_utils.dart';
+
+enum _CellAction { addRowAfter, addColumnAfter, removeRow, removeColumn }
+
 class _FormattedTextViewer extends StatefulWidget {
   const _FormattedTextViewer({
     required this.readOnly,
     required this.quillText,
-    required this.dropRootFocus,
     required this.onChange,
     this.setActiveController,
     super.key,
@@ -15,7 +18,6 @@ class _FormattedTextViewer extends StatefulWidget {
 
   final bool readOnly;
   final String quillText;
-  final void Function() dropRootFocus;
   final void Function(String delta) onChange;
   final void Function(QuillController controller)? setActiveController;
 
@@ -89,7 +91,10 @@ class TableCellWidget extends StatefulWidget {
     required this.cellId,
     required this.cellData,
     required this.onUpdate,
-    required this.onTap,
+    required this.onAddRowAfter,
+    required this.onAddColumnAfter,
+    required this.onRemoveRow,
+    required this.onRemoveColumn,
     required this.editable,
     required this.toolbarGlobalKey,
     required this.onEditMode,
@@ -102,8 +107,12 @@ class TableCellWidget extends StatefulWidget {
   final bool editable;
   final String cellId;
   final String cellData;
-  final bool Function() onTap;
   final void Function(String data) onUpdate;
+
+  final VoidCallback? onAddRowAfter;
+  final VoidCallback? onAddColumnAfter;
+  final VoidCallback? onRemoveRow;
+  final VoidCallback? onRemoveColumn;
   final GlobalKey? toolbarGlobalKey;
   final GlobalKey? customToolbarKey;
   final Widget Function(QuillController)? customToolbar;
@@ -118,9 +127,55 @@ class _TableCellWidgetState extends State<TableCellWidget> {
   final _cellKey = GlobalKey();
   var _editMode = false;
 
+  Future<void> _showCellMenu(Offset globalPosition) async {
+    final action = await showMenu<_CellAction>(
+      context: context,
+      position: menuPositionAt(context, globalPosition),
+      items: [
+        PopupMenuItem(
+          value: _CellAction.addRowAfter,
+          enabled: widget.onAddRowAfter != null,
+          child: const Text('Добавить строку ниже'),
+        ),
+        PopupMenuItem(
+          value: _CellAction.addColumnAfter,
+          enabled: widget.onAddColumnAfter != null,
+          child: const Text('Добавить столбец справа'),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: _CellAction.removeRow,
+          enabled: widget.onRemoveRow != null,
+          child: const Text('Удалить строку'),
+        ),
+        PopupMenuItem(
+          value: _CellAction.removeColumn,
+          enabled: widget.onRemoveColumn != null,
+          child: const Text('Удалить столбец'),
+        ),
+      ],
+    );
+
+    switch (action) {
+      case _CellAction.addRowAfter:
+        widget.onAddRowAfter?.call();
+      case _CellAction.addColumnAfter:
+        widget.onAddColumnAfter?.call();
+      case _CellAction.removeRow:
+        widget.onRemoveRow?.call();
+      case _CellAction.removeColumn:
+        widget.onRemoveColumn?.call();
+      case null:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onSecondaryTapUp: widget.editable
+          ? (details) => _showCellMenu(details.globalPosition)
+          : null,
       onTap: widget.onEditMode == null
           ? null
           : () async {
@@ -187,7 +242,6 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                                         });
                                       });
                                     },
-                                    dropRootFocus: () {},
                                     onChange: (val) {
                                       setState(() {
                                         widget.onUpdate(val);
@@ -220,7 +274,6 @@ class _TableCellWidgetState extends State<TableCellWidget> {
                 readOnly: true,
                 quillText: widget.cellData,
                 key: Key(widget.cellData),
-                dropRootFocus: widget.onTap,
                 onChange: (_) {},
               )),
     );

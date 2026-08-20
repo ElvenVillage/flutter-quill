@@ -102,8 +102,7 @@ class TableWidget extends StatefulWidget {
 class _TableWidgetState extends State<TableWidget> {
   TableModel _tableModel = TableModel(columns: {}, rows: {});
 
-  var _removeRowMode = false;
-  var _removeColumnMode = false;
+  static const _newId = '';
 
   @override
   void initState() {
@@ -111,52 +110,69 @@ class _TableWidgetState extends State<TableWidget> {
     super.initState();
   }
 
-  void _addColumn() {
+  void _rebuild(List<String> columnIds, List<String> rowIds) {
+    final columns = <String, ColumnModel>{};
+    for (var column = 0; column < columnIds.length; column++) {
+      final id = '${column + 1}';
+      columns[id] = ColumnModel(id: id, position: column);
+    }
+
+    final rows = <String, RowModel>{};
+    for (var row = 0; row < rowIds.length; row++) {
+      final id = '${row + 1}';
+      final oldCells = _tableModel.rows[rowIds[row]]?.cells;
+      rows[id] = RowModel(
+        id: id,
+        cells: {
+          for (var column = 0; column < columnIds.length; column++)
+            '${column + 1}': oldCells?[columnIds[column]] ?? '',
+        },
+      );
+    }
+
     setState(() {
-      final id = '${_tableModel.columns.length + 1}';
-      final position = _tableModel.columns.length;
-      _tableModel.columns[id] = ColumnModel(id: id, position: position);
-      _tableModel.rows.forEach((key, row) {
-        row.cells[id] = '';
-      });
+      _tableModel = TableModel(columns: columns, rows: rows);
     });
     _updateTable();
   }
 
-  void _addRow() {
-    setState(() {
-      final id = '${_tableModel.rows.length + 1}';
-      final cells = <String, String>{};
-      _tableModel.columns.forEach((key, column) {
-        cells[key] = '';
-      });
-      _tableModel.rows[id] = RowModel(id: id, cells: cells);
-    });
-    _updateTable();
+  List<String> get _columnIds => _tableModel.columns.keys.toList();
+  List<String> get _rowIds => _tableModel.rows.keys.toList();
+
+  void _addColumnAfter(String columnId) {
+    final columns = _columnIds;
+    columns.insert(columns.indexOf(columnId) + 1, _newId);
+    _rebuild(columns, _rowIds);
+  }
+
+  void _addRowAfter(String rowId) {
+    final rows = _rowIds;
+    rows.insert(rows.indexOf(rowId) + 1, _newId);
+    _rebuild(_columnIds, rows);
   }
 
   void _removeColumn(String columnId) {
-    setState(() {
-      if (_tableModel.columns.length > 1) {
-        _tableModel.columns.remove(columnId);
-        _tableModel.rows.forEach((key, row) {
-          row.cells.remove(columnId);
-        });
-      }
-
-      _removeColumnMode = false;
-    });
-    _updateTable();
+    if (_tableModel.columns.length <= 1) return;
+    _rebuild(_columnIds..remove(columnId), _rowIds);
   }
 
   void _removeRow(String rowId) {
-    setState(() {
-      if (_tableModel.rows.length > 1) {
-        _tableModel.rows.remove(rowId);
-      }
-      _removeRowMode = false;
-    });
-    _updateTable();
+    if (_tableModel.rows.length <= 1) return;
+    _rebuild(_columnIds, _rowIds..remove(rowId));
+  }
+
+  void _removeTable() {
+    widget.controller.moveCursorToPosition(widget.offset);
+    final offset = getEmbedNode(
+      widget.controller,
+      widget.controller.selection.start,
+    ).offset;
+    widget.controller.replaceText(
+      offset,
+      1,
+      '',
+      TextSelection.collapsed(offset: offset),
+    );
   }
 
   void _updateCell(String columnId, String rowId, String data) {
@@ -197,62 +213,25 @@ class _TableWidgetState extends State<TableWidget> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!widget.controller.readOnly) ...[
-              if (_removeRowMode || _removeColumnMode)
-                IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _removeRowMode = false;
-                        _removeColumnMode = false;
-                      });
-                    },
-                    icon: const Icon(Icons.cancel))
-              else
-                IconButton(
+              Builder(
+                builder: (buttonContext) => IconButton(
                   icon: const Icon(Icons.more_vert),
+                  tooltip: 'Действия с таблицей',
                   onPressed: () async {
-                    final position = renderPosition(context);
-                    await showMenu<TableOperation>(
-                        context: context,
-                        position: position,
-                        items: [
-                          const PopupMenuItem(
-                            value: TableOperation.addColumn,
-                            child: Text('Добавить столбец'),
-                          ),
-                          const PopupMenuItem(
-                            value: TableOperation.addRow,
-                            child: Text('Добавить строку'),
-                          ),
-                          const PopupMenuItem(
-                            value: TableOperation.removeColumn,
-                            child: Text('Удалить столбец'),
-                          ),
-                          const PopupMenuItem(
-                            value: TableOperation.removeRow,
-                            child: Text('Удалить строку'),
-                          ),
-                        ]).then((value) {
-                      if (value != null) {
-                        if (value == TableOperation.addRow) {
-                          _addRow();
-                        }
-                        if (value == TableOperation.addColumn) {
-                          _addColumn();
-                        }
-                        if (value == TableOperation.removeColumn) {
-                          setState(() {
-                            _removeColumnMode = true;
-                          });
-                        }
-                        if (value == TableOperation.removeRow) {
-                          setState(() {
-                            _removeRowMode = true;
-                          });
-                        }
-                      }
-                    });
+                    final remove = await showMenu<bool>(
+                      context: buttonContext,
+                      position: menuPositionUnder(buttonContext),
+                      items: const [
+                        PopupMenuItem(
+                          value: true,
+                          child: Text('Удалить таблицу'),
+                        ),
+                      ],
+                    );
+                    if (remove ?? false) _removeTable();
                   },
                 ),
+              ),
               const Divider(
                 color: Colors.black,
                 height: 1,
@@ -278,25 +257,24 @@ class _TableWidgetState extends State<TableWidget> {
         if (key != 'id') {
           final columnId = key;
           final data = value;
+          final editable = !widget.controller.readOnly;
+
           rowCells.add(TableCellWidget(
             customToolbar: widget.customToolbar,
             customToolbarKey: widget.customToolbarKey,
             config: widget.config,
             onEditMode: widget.onEditMode,
             toolbarGlobalKey: widget.toolbarGlobalKey,
-            editable: !widget.controller.readOnly,
+            editable: editable,
             cellId: rowKey,
-            onTap: () {
-              if (_removeColumnMode) {
-                _removeColumn(columnId);
-                return true;
-              }
-              if (_removeRowMode) {
-                _removeRow(rowId);
-                return true;
-              }
-              return false;
-            },
+            onAddRowAfter: editable ? () => _addRowAfter(rowId) : null,
+            onAddColumnAfter: editable ? () => _addColumnAfter(columnId) : null,
+            onRemoveRow: editable && _tableModel.rows.length > 1
+                ? () => _removeRow(rowId)
+                : null,
+            onRemoveColumn: editable && _tableModel.columns.length > 1
+                ? () => _removeColumn(columnId)
+                : null,
             cellData: data,
             onUpdate: (data) {
               _updateCell(columnId, rowKey, data);

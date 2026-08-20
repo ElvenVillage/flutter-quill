@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart'
     show
         BuildContext,
         MediaQuery,
+        Navigator,
         Offset,
         Overlay,
         Rect,
@@ -33,6 +34,34 @@ RelativeRect renderPosition(BuildContext context, [Size? size]) {
     Offset.zero & size * 0.40,
   );
   return position;
+}
+
+RelativeRect menuPositionUnder(BuildContext context) {
+  final overlay =
+      Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+  final button = context.findRenderObject()! as RenderBox;
+
+  return RelativeRect.fromRect(
+    Rect.fromPoints(
+      button.localToGlobal(Offset.zero, ancestor: overlay),
+      button.localToGlobal(
+        button.size.bottomRight(Offset.zero),
+        ancestor: overlay,
+      ),
+    ),
+    Offset.zero & overlay.size,
+  );
+}
+
+/// Положение выпадающего меню в точке [globalPosition].
+RelativeRect menuPositionAt(BuildContext context, Offset globalPosition) {
+  final overlay =
+      Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+
+  return RelativeRect.fromRect(
+    Rect.fromPoints(globalPosition, globalPosition),
+    Offset.zero & overlay.size,
+  );
 }
 
 void insertTable(int rows, int columns, QuillController quillController,
